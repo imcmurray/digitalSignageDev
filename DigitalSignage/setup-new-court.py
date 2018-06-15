@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Shows basic usage of the Slides API. Prints the number of slides and elments in
 a presentation.
@@ -30,6 +31,10 @@ gc = gspread.authorize(creds)
 
 # We need to look at the master spreadsheet for entries which do no have a linked file_id to their configuration sheet
 
+# This is the template for new courts
+NEW_CONF_SPREADSHEET_ID = '1zRG6Uex-msDs5Av3W9Swzfl-gu1pZnWoHG1VOw0jbMU'
+
+# This is the master spreadsheet that will contain ALL courts configured and their associated configuration file id
 MASTER_SPREADSHEET_ID = '1FtGo3rku0DJZvqytetq0y-R-tUQyFdERfSiyhA_SnXw'
 
 # gspread way of life
@@ -85,10 +90,16 @@ if len(courtsToSetup):
         print('\tSetting up [%s]'%court)
 
         body = {
-            'name': '%s DS Configuration'% court
+            'name': 'FRESH %s DS Configuration'% court
         }
-        drive_response = drive_service.files().copy(fileId=MASTER_SPREADSHEET_ID, body=body).execute()
+        #drive_response = drive_service.files().copy(fileId=MASTER_SPREADSHEET_ID, body=body).execute()
+        drive_response = drive_service.files().copy(fileId=NEW_CONF_SPREADSHEET_ID, body=body).execute()
         configFileId = drive_response.get('id')
+
+        # The idea was to parse the CourtInfo location for each court
+        # and automatically create configuration based on the XML...
+        # But I think it would be best to just copy the config file
+        # and manually walk through it - June 2018
 
         # Not sure why we are setting this here - no use!
         courts[court]['configFile']['name'] = configFileId
@@ -106,3 +117,64 @@ if len(courtsToSetup):
 else:
     print('No setup action required!')
 
+
+
+---
+
+#Python code to illustrate parsing of XML files
+# importing the required modules
+import csv
+import json
+import requests
+import xml.etree.ElementTree as ET
+
+# creating HTTP response object from given url
+courtInfoUrl = 'https://ecf.utb.uscourts.gov/cgi-bin/CourtInfo.pl?output=xml&location=main'
+#courtInfoUrl = 'https://ecf.wawb.uscourts.gov/cgi-bin/CourtInfo.pl?output=xml&location=main'
+resp = requests.get(courtInfoUrl)
+tree = ET.ElementTree(ET.fromstring(resp.content))
+#print(tree)
+root = tree.getroot()
+#print(root)
+
+#def show(elem):
+#    print elem.tag
+#    for child in elem.findall('*'):
+#        show(child)
+
+def show(elem, indent = 0):
+    #print ' ' * indent + elem.tag
+    for child in elem.findall('*'):
+        show(child, indent + 1)
+
+show(root)
+
+courtInfo={}
+#print root.find('CourtName').text
+#print root.find('Locations/website').text
+cmecfRelease = root.find('ReleaseID').text
+#for e in root.findall('Locations/name'):
+#courtInfo['courtName'] = root.find('CourtName').text
+courtName = root.find('CourtName').text
+print('US Bankruptcy Court, %s'% courtName)
+cmecfRelease = root.find('ReleaseID').text
+print(cmecfRelease)
+locationCount=0
+locationInfo={}
+locations=[]
+for e in root.findall('Locations/*'):
+    if 'name' in e.tag:
+        print('Location [%s]'%(locationCount+1))
+        locationCount+=1
+    print('\t[%s] = %s'% (e.tag, e.text))
+
+# JSON extraction
+#url = 'https://www.utb.uscourts.gov/chamberaccess/active_hearings_rkm.json'
+#response = requests.get(url)
+#json_obj = response.json()
+
+#for k in range(len(json_obj['rows'])):
+
+#tree = ET.parse(resp)
+
+--=

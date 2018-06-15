@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# This will be the new process (june 11th 2018) of interfacing with the configuration options
+# from the spreadsheet entirely. No hard coded values will be used in this code.
+
 from __future__ import print_function
 import json,requests,time,random,re,os.path
 from subprocess import call, check_output
@@ -30,6 +33,22 @@ formatted_today = today.strftime("%Y-%m-%d")
 #formatted_today = "2018-05-23"
 right_now_epoch = int(time.time())
 
+
+def get_judges():
+    # dict of the judges
+    return judges
+
+def get_courtrooms():
+    # dict of the courtrooms 
+    return courtrooms
+
+def get_templates():
+    # dict of templates
+    #   including file id of svg location
+    return templates
+
+# WORK TO DO IAN TUESDAY JUNE 12th 2018
+###
 
 def prepare_name_list(data):
     names = []

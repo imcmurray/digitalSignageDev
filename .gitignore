@@ -2,3 +2,6 @@ credentials.json
 client_secret.json
 config.json
 out.json
+digsig_config.json
+redisCheck.py
+*.pyc
